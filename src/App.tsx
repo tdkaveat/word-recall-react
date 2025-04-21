@@ -19,8 +19,7 @@ function getRandomWords(count = 5) {
 
 export default function App() {
     const [words, setWords] = useState<string[]>([]);
-    const [phase, setPhase] = useState<'idle' | 'showing' | 'hidden' | 'recall'>('idle');
-    const [displayCountdown, setDisplayCountdown] = useState(0);
+    const [phase, setPhase] = useState<'idle' | 'showing' | 'hidden' | 'recall' | 'submitted'>('idle');    const [displayCountdown, setDisplayCountdown] = useState(0);
     const [recallMinutes, setRecallMinutes] = useState(1);
     const [showInput, setShowInput] = useState(false);
     const [userInput, setUserInput] = useState('');
@@ -36,6 +35,7 @@ export default function App() {
         setUserInput('');
     }
 
+// Countdown logic
     useEffect(() => {
         if (phase === 'showing' && displayCountdown > 0) {
             const interval = setInterval(() => {
@@ -46,14 +46,20 @@ export default function App() {
 
         if (phase === 'showing' && displayCountdown === 0) {
             setPhase('hidden');
+        }
+    }, [phase, displayCountdown]);
+
+// Recall delay logic (start when we enter the hidden phase)
+    useEffect(() => {
+        if (phase === 'hidden') {
             const timeout = setTimeout(() => {
                 setShowInput(true);
                 setPhase('recall');
             }, recallMinutes * 60 * 1000);
-            return () => clearTimeout(timeout);
-        }
-    }, [phase, displayCountdown, recallMinutes]);
 
+            return () => clearTimeout(timeout); // ✅ clean up if phase changes before timeout
+        }
+    }, [phase, recallMinutes]);
     return (
         <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
             <h1>Random Word Recall</h1>
@@ -91,16 +97,27 @@ export default function App() {
             {showInput && (
                 <div>
                     <p>Please enter the words you remember (space-separated):</p>
-                    <input
-                        type="text"
-                        value={userInput}
-                        onChange={(e) => setUserInput(e.target.value)}
-                        style={{ width: '100%', padding: '0.5rem', fontSize: '1.25rem' }}
-                    />
-                    <div style={{ marginTop: '1rem' }}>
-                        <p><strong>Original words were:</strong></p>
-                        <p>{words.join('  ')}</p>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        <input
+                            type="text"
+                            value={userInput}
+                            onChange={(e) => setUserInput(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    setPhase('submitted');
+                                }
+                            }}
+                            style={{ flex: 1, padding: '0.5rem', fontSize: '1.25rem' }}
+                        />
+                        <button onClick={() => setPhase('submitted')}>Submit Answer</button>
                     </div>
+
+                    {phase === 'submitted' && (
+                        <div style={{ marginTop: '1rem' }}>
+                            <p><strong>Original words were:</strong></p>
+                            <p>{words.join('  ')}</p>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

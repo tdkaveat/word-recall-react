@@ -10,7 +10,18 @@ const mocaWords = [
     'circle', 'square', 'triangle', 'red', 'blue', 'green', 'white', 'black', 'yellow', 'orange',
     'run', 'jump', 'sleep', 'eat', 'drink', 'write', 'read', 'speak', 'walk', 'laugh',
     'happy', 'sad', 'angry', 'tired', 'cold', 'hot', 'hungry', 'scared', 'bored', 'calm',
-    'money', 'music', 'water', 'fire', 'love', 'noise', 'game', 'school', 'work', 'time'
+    'money', 'music', 'water', 'fire', 'love', 'noise', 'game', 'school', 'work', 'time',
+
+    // ➕ Additional 100 unique words
+    'glove', 'map', 'clock', 'tooth', 'mirror', 'backpack', 'coin', 'socks', 'blanket', 'soap',
+    'bottle', 'shoes', 'glasses', 'stove', 'cup', 'ring', 'bench', 'roof', 'sand', 'rain',
+    'snow', 'ice', 'wind', 'storm', 'sun', 'moon', 'star', 'sky', 'field', 'grass',
+    'fence', 'gate', 'barn', 'farm', 'hay', 'cow', 'sheep', 'pig', 'chicken', 'barn',
+    'ant', 'bee', 'spider', 'fly', 'leaf', 'root', 'rock', 'dirt', 'mud', 'hole',
+    'hill', 'valley', 'path', 'trail', 'wood', 'brick', 'nail', 'hammer', 'tool', 'rope',
+    'boat', 'ship', 'ocean', 'lake', 'dock', 'net', 'flag', 'hat', 'shirt', 'pants',
+    'belt', 'zipper', 'button', 'needle', 'thread', 'brush', 'comb', 'mirror', 'soap', 'towel',
+    'smile', 'cry', 'think', 'guess', 'hope', 'wish', 'plan', 'begin', 'end', 'stay'
 ];
 
 function getRandomWords(count = 5) {
@@ -20,7 +31,7 @@ function getRandomWords(count = 5) {
 export default function App() {
     const [words, setWords] = useState<string[]>([]);
     const [phase, setPhase] = useState<'idle' | 'showing' | 'hidden' | 'recall' | 'submitted'>('idle');    const [displayCountdown, setDisplayCountdown] = useState(0);
-    const [recallMinutes, setRecallMinutes] = useState(1);
+    const [recallMinutes, setRecallMinutes] = useState(5);
     const [showInput, setShowInput] = useState(false);
     const [userInput, setUserInput] = useState('');
 
@@ -35,6 +46,21 @@ export default function App() {
         setUserInput('');
     }
 
+    function playBeep() {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, ctx.currentTime); // Frequency in Hz
+        gain.gain.setValueAtTime(0.2, ctx.currentTime); // Volume
+
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + 0.5); // Beep duration in seconds
+    }
 // Countdown logic
     useEffect(() => {
         if (phase === 'showing' && displayCountdown > 0) {
@@ -53,9 +79,10 @@ export default function App() {
     useEffect(() => {
         if (phase === 'hidden') {
             const timeout = setTimeout(() => {
+                playBeep(); // 🔊 Add this line
                 setShowInput(true);
                 setPhase('recall');
-            }, recallMinutes * 60 * 1000);
+            }, recallMinutes * 60 * 1000);  // default 5 minutes
 
             return () => clearTimeout(timeout); // ✅ clean up if phase changes before timeout
         }
